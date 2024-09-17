@@ -1,13 +1,19 @@
 import React from 'react';
-import './App.css';
+import { Provider } from 'react-redux';
+import { ThemeProvider } from '@mui/material/styles';
+import store from './store';
 import TodoList from './components/TodoList';
+import theme from './theme';
 
 const App: React.FC = () => {
   return (
-    <div className="App">
-      <h1>Comcast Todo Exercise</h1>
-      <TodoList/>
-    </div>
+    <Provider store={store}>
+      <ThemeProvider theme={theme}>
+        <div className="App">
+          <TodoList />
+        </div>
+      </ThemeProvider>
+    </Provider>
   );
 }
 

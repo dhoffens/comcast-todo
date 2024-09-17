@@ -1,40 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-
-interface Todo {
-    userId: number;
-    id: number;
-    title: string;
-    completed: boolean
-}
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '../store';
+import { fetchTodos, completeTodo, Todo } from '../reducers/todoReducer';
+import {
+    Button,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    Typography,
+    Container,
+    CircularProgress,
+    Alert,
+    Stack,
+  } from '@mui/material';
 
 const TodosList: React.FC = () => {
-    const [todos, setTodos] = useState<Todo[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+    const dispatch = useDispatch<AppDispatch>();
     const [page, setPage] = useState<number>(1);
     const limit = 40;
+    const {todos, loading, error} = useSelector((state: RootState) => state);
 
     useEffect(() => {
-        const fetchTodos = async () => {
-            try {
-                const res = await axios.get<Todo[]>('https://jsonplaceholder.typicode.com/todos', {
-                    params: {
-                        _limit: limit,
-                        _page: page
-                    }
-                });
-                console.log(res.data);
-                setTodos(res.data)
-                setLoading(false);
-            } catch(error) {
-                setError('Error fetching todos');
-                setLoading(false);
-            }
-        }
+        dispatch(fetchTodos({ page, limit }))
+    }, [dispatch, page]);
 
-        fetchTodos();
-    }, [page]);
+    const handleComplete = (id: number) => {
+        dispatch(completeTodo(id));
+      };
 
     const nextPage = () => setPage((prevPage) => prevPage + 1);
     const prevPage = () => setPage((prevPage) => Math.max(prevPage - 1, 1)); 
@@ -48,18 +42,77 @@ const TodosList: React.FC = () => {
     }
 
     return (
-        <div>
-            <h1>Todo List</h1>
-            <ol>
-                {todos.map((todo) => (
-                    <li value={todo.id} key={todo.id}>
-                        {todo.title}, {todo.completed}
-                    </li>
-                ))}
-            </ol>
-            <button onClick={prevPage} disabled={page === 1}>Previous</button>
-            <button onClick={nextPage}>Next</button>
-        </div>
-    )}
+        <Container maxWidth="sm" sx={{ marginTop: 4 }}>
+          <Typography variant="h4" gutterBottom>
+            Todo List
+          </Typography>
+    
+          {loading && (
+            <Stack alignItems="center">
+              <CircularProgress />
+            </Stack>
+          )}
+    
+          {error && <Alert severity="error">{error}</Alert>}
+    
+          <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Todo</TableCell>
+            <TableCell>Completed</TableCell>
+            <TableCell>Action</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {todos.map((todo: Todo) => (
+            <TableRow key={todo.id}>
+              <TableCell>
+                <Typography
+                  variant="body1"
+                >
+                  {todo.id}
+                </Typography>
+              </TableCell>
+              <TableCell>
+                <Typography
+                  variant="body1"
+                  style={{
+                    textDecoration: todo.completed ? 'line-through' : 'none',
+                  }}
+                >
+                  {todo.title}
+                </Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2">
+                  {todo.completed ? 'Yes' : 'No'}
+                </Typography>
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleComplete(todo.id)}
+                  disabled={todo.completed}
+                >
+                  {todo.completed ? 'Completed' : 'Complete'}
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    
+          <Stack direction="row" spacing={2} justifyContent="center" marginTop={2}>
+            <Button variant="contained" color="secondary" onClick={prevPage} disabled={page === 1}>
+              Previous
+            </Button>
+            <Button variant="contained" color="secondary" onClick={nextPage}>
+              Next
+            </Button>
+          </Stack>
+        </Container>
+      );
+    }
 
     export default TodosList;
